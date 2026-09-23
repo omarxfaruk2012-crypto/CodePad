@@ -85,13 +85,23 @@ h1.hero{font-size:1.7rem; margin:6px 0 4px; letter-spacing:-.02em;}
   width:100%; overflow:hidden; border-radius:1rem; border:1px solid rgba(226,232,240,.8);
   background:rgba(255,255,255,.95); box-shadow:0 1px 3px rgba(15,23,42,.08);
 }
-.code-box-bar{
-  display:flex; align-items:center; gap:10px; height:42px; padding:0 16px;
+  .code-box-bar{
+  display:flex; align-items:center; justify-content:space-between; gap:10px; height:42px; padding:0 12px 0 16px;
   border-bottom:1px solid #e2e8f0; background:rgba(248,250,252,.9);
-}
-.window-dots{display:flex; gap:5px;}
-.window-dots i{display:block; width:7px; height:7px; border-radius:50%; background:#cbd5e1;}
-.file-tab{padding:6px 12px; border-left:1px solid #e2e8f0; color:#475569; font:600 12px/1 var(--mono-font);}
+  }
+  .code-box-file{display:flex; align-items:center; gap:10px; min-width:0;}
+  .window-dots{display:flex; gap:5px; flex-shrink:0;}
+  .window-dots i{display:block; width:7px; height:7px; border-radius:50%; background:#cbd5e1;}
+  .file-tab{min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; padding:6px 12px; border-left:1px solid #e2e8f0; color:#475569; font:600 12px/1 var(--mono-font);}
+  .run-code-btn{
+  flex-shrink:0; border:0; border-radius:0.75rem; padding:7px 12px; background:#2563EB; color:#fff;
+  font:700 12px/1 -apple-system,BlinkMacSystemFont,"Segoe UI",Inter,sans-serif; cursor:pointer; white-space:nowrap;
+  box-shadow:0 4px 12px rgba(37,99,235,.24); transition:transform .18s cubic-bezier(.34,1.56,.64,1), box-shadow .18s ease;
+  }
+  .run-code-btn:hover{box-shadow:0 6px 18px rgba(37,99,235,.36)}
+  .run-code-btn:active{transform:scale(.95); box-shadow:0 2px 8px rgba(37,99,235,.3)}
+  .run-code-btn:focus-visible{outline:3px solid rgba(37,99,235,.3); outline-offset:2px}
+
 .editor-container{
   display:flex; width:100%; background:rgba(248,250,252,.75); overflow:hidden;
   height:calc(100vh - 262px); min-height:300px;
@@ -110,18 +120,9 @@ h1.hero{font-size:1.7rem; margin:6px 0 4px; letter-spacing:-.02em;}
 }
 .editor-textarea:focus{outline:none}
 .code-box-frame:focus-within{border-color:var(--accent2); box-shadow:0 0 0 3px rgba(59,130,246,.15)}
-@media(max-width:640px){.editor-container{height:calc(100dvh - 262px); min-height:260px}.code-box-bar{height:40px}}
+  @media(max-width:640px){.editor-container{height:calc(100dvh - 262px); min-height:260px}.code-box-bar{height:40px; padding-left:10px; gap:6px}.code-box-file{gap:6px}.file-tab{padding-left:8px; padding-right:6px}.run-code-btn{padding:7px 9px; font-size:11px}}
 
-.fab{
-  position:fixed; left:50%; transform:translateX(-50%); bottom:calc(28px + env(safe-area-inset-bottom,0px));
-  z-index:20; background:linear-gradient(135deg,var(--accent),var(--accent2)); color:#fff; border:none;
-  padding:16px 30px; border-radius:999px; font-weight:700; font-size:1rem; cursor:pointer;
-  box-shadow:0 10px 30px rgba(37,99,235,.45); animation:glow 2.4s ease-in-out infinite;
-  transition:transform .15s ease;
-}
-.fab:active{transform:translateX(-50%) scale(.94)}
-@keyframes glow{0%,100%{box-shadow:0 10px 30px rgba(37,99,235,.35)}50%{box-shadow:0 14px 42px rgba(37,99,235,.6)}}
-@media(min-width:720px){.fab{left:auto; right:36px; transform:none;} .fab:active{transform:scale(.94)}}
+
 
 /* Preview */
 .preview-bar{display:flex; justify-content:space-between; align-items:center; max-width:900px; margin:0 auto 16px;}
@@ -197,14 +198,13 @@ footer{text-align:center; margin-top:40px; color:var(--muted); font-size:.85rem;
   </div>
   <div class="container">
     <div class="code-box-frame">
-      <div class="code-box-bar"><span class="window-dots" aria-hidden="true"><i></i><i></i><i></i></span><span class="file-tab">index.html</span></div>
+      <div class="code-box-bar"><div class="code-box-file"><span class="window-dots" aria-hidden="true"><i></i><i></i><i></i></span><span class="file-tab">index.html</span></div><button class="run-code-btn" type="button" onclick="runHtml()">Run Code ⚡</button></div>
       <div class="editor-container">
         <div class="line-gutter" id="html-gutter"></div>
         <textarea class="editor-textarea" id="html-code" aria-label="HTML code editor" spellcheck="false"></textarea>
       </div>
     </div>
   </div>
-  <button class="fab" onclick="runHtml()">Run Code ⚡</button>
 </section>
 
 <!-- HTML PREVIEW -->
@@ -224,14 +224,13 @@ footer{text-align:center; margin-top:40px; color:var(--muted); font-size:.85rem;
   </div>
   <div class="container">
     <div class="code-box-frame">
-      <div class="code-box-bar"><span class="window-dots" aria-hidden="true"><i></i><i></i><i></i></span><span class="file-tab">style.css</span></div>
+      <div class="code-box-bar"><div class="code-box-file"><span class="window-dots" aria-hidden="true"><i></i><i></i><i></i></span><span class="file-tab">style.css</span></div><button class="run-code-btn" type="button" onclick="runCss()">Run Code ⚡</button></div>
       <div class="editor-container">
         <div class="line-gutter" id="css-gutter"></div>
         <textarea class="editor-textarea" id="css-code" aria-label="CSS code editor" spellcheck="false"></textarea>
       </div>
     </div>
   </div>
-  <button class="fab" onclick="runCss()">Run Code ⚡</button>
 </section>
 
 <!-- CSS PREVIEW -->
@@ -265,14 +264,13 @@ footer{text-align:center; margin-top:40px; color:var(--muted); font-size:.85rem;
   </div>
   <div class="container">
     <div class="code-box-frame">
-      <div class="code-box-bar"><span class="window-dots" aria-hidden="true"><i></i><i></i><i></i></span><span class="file-tab">script.js</span></div>
+      <div class="code-box-bar"><div class="code-box-file"><span class="window-dots" aria-hidden="true"><i></i><i></i><i></i></span><span class="file-tab">script.js</span></div><button class="run-code-btn" type="button" onclick="runJs()">Run Code ⚡</button></div>
       <div class="editor-container">
         <div class="line-gutter" id="js-gutter"></div>
         <textarea class="editor-textarea" id="js-code" aria-label="JavaScript code editor" spellcheck="false"></textarea>
       </div>
     </div>
   </div>
-  <button class="fab" onclick="runJs()">Run Code ⚡</button>
 </section>
 
 <!-- JS PREVIEW -->
@@ -301,7 +299,7 @@ footer{text-align:center; margin-top:40px; color:var(--muted); font-size:.85rem;
     <div class="acc-item"><div class="acc-head" onclick="toggleAcc(this)">Auto-save <span class="chev">⌄</span></div>
       <div class="acc-body">Each language saves automatically as you type, so your code is still there next time you visit CodePad.</div></div>
     <div class="acc-item"><div class="acc-head" onclick="toggleAcc(this)">Running code <span class="chev">⌄</span></div>
-      <div class="acc-body">Tap the floating "Run Code ⚡" button to execute your code and jump to the preview. Use Refresh to re-run without losing your editor content.</div></div>
+      <div class="acc-body">Tap the "Run Code ⚡" button in the editor header to execute your code and jump to the preview. Use Refresh to re-run without losing your editor content.</div></div>
   </div>
 </section>
 
