@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>CodePad</title>
+<style>
+:root{
+  --bg:#FFFFFF; --ink:#0F172A; --muted:#64748B;
+  --accent:#2563EB; --accent2:#3B82F6;
+  --glass-bg:rgba(255,255,255,0.7); --glass-border:rgba(255,255,255,0.8);
+  --mono-font:"Fira Code", "JetBrains Mono", "SF Mono", Consolas, monospace;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+*{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+html,body{height:100%}
+body{
+  margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,sans-serif;
+  background:var(--bg); color:var(--ink); overflow-x:hidden; position:relative;
+}
+.orb{position:fixed; border-radius:50%; filter:blur(60px); opacity:.35; z-index:0; pointer-events:none;
+  animation:float 16s ease-in-out infinite;}
+.orb1{width:340px;height:340px; background:#93c5fd; top:-80px; left:-80px;}
+.orb2{width:300px;height:300px; background:#c7d2fe; bottom:-100px; right:-60px; animation-delay:4s;}
+.orb3{width:220px;height:220px; background:#bfdbfe; top:40%; left:60%; animation-delay:8s;}
+@keyframes float{0%,100%{transform:translate(0,0)}50%{transform:translate(20px,-30px)}}
+
+.view{ position:relative; z-index:1; min-height:100vh; display:none; padding:24px 20px 60px;
+  animation:fade .35s ease; }
+.view.active{display:block}
+@keyframes fade{from{opacity:0; transform:translateY(8px)} to{opacity:1; transform:translateY(0)}}
+
+.navbar{
+  position:sticky; top:env(safe-area-inset-top,0px); z-index:10; max-width:900px; margin:0 auto 28px;
+  display:flex; align-items:center; justify-content:space-between; padding:14px 22px;
+  background:var(--glass-bg); backdrop-filter:blur(24px); -webkit-backdrop-filter:blur(24px);
+  border:1px solid var(--glass-border); border-radius:24px;
+  box-shadow:0 8px 32px 0 rgba(31,38,135,0.07);
+}
+.logo{font-weight:700; font-size:1.15rem; letter-spacing:-.02em;}
+.logo span{color:var(--accent)}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--accent);display:inline-block;margin-right:6px;
+  animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+.glass-btn{
+  display:inline-flex; align-items:center; gap:8px; cursor:pointer; border:1px solid var(--glass-border);
+  background:var(--glass-bg); backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px);
+  border-radius:16px; padding:10px 16px; font-size:.92rem; font-weight:600; color:var(--ink);
+  box-shadow:0 8px 32px 0 rgba(31,38,135,0.07); transition:transform .15s ease, box-shadow .2s ease;
+  user-select:none;
+}
+.glass-btn:hover{box-shadow:0 10px 36px 0 rgba(37,99,235,0.15); transform:translateY(-2px)}
+.glass-btn:active{transform:scale(.94)}
+
+.container{max-width:900px; margin:0 auto;}
+.grid{display:grid; grid-template-columns:1fr 1fr; gap:18px; margin-top:8px;}
+@media (max-width:640px){.grid{grid-template-columns:1fr}}
+
+.card{
+  background:var(--glass-bg); backdrop-filter:blur(24px); -webkit-backdrop-filter:blur(24px);
+  border:1px solid var(--glass-border); border-radius:24px; padding:26px;
+  box-shadow:0 8px 32px 0 rgba(31,38,135,0.07); cursor:pointer;
+  transition:transform .2s ease, box-shadow .25s ease; height:150px;
+  display:flex; flex-direction:column; justify-content:space-between; position:relative; overflow:hidden;
+}
+.card::after{content:"";position:absolute; inset:0; border-radius:24px;
+  background:linear-gradient(120deg, transparent 30%, rgba(255,255,255,.5) 45%, transparent 60%);
+  transform:translateX(-120%); transition:transform .6s ease;}
+.card:hover::after{transform:translateX(120%)}
+.card:hover{transform:translateY(-6px); box-shadow:0 14px 40px 0 rgba(37,99,235,.18)}
+.badge{width:38px;height:38px;border-radius:12px; display:flex; align-items:center; justify-content:center;
+  font-weight:700; font-size:.8rem; color:#fff;}
+.card h3{margin:0; font-size:1.05rem}
+.card p{margin:2px 0 0; color:var(--muted); font-size:.85rem}
+
+h1.hero{font-size:1.7rem; margin:6px 0 4px; letter-spacing:-.02em;}
+.sub{color:var(--muted); margin:0 0 22px; font-size:.95rem;}
+
+/* Custom Editor */
+.editor-container{
+  display:flex; width:100%; border-radius:20px; border:1px solid var(--glass-border);
+  background:rgba(248,250,252,.75); backdrop-filter:blur(10px); overflow:hidden;
+  box-shadow:0 8px 32px rgba(31,38,135,.06); height:calc(100vh - 220px); min-height:300px;
+}
+.line-gutter{
+  width:54px; background:rgba(248,250,252,.5); border-right:1px solid #e2e8f0;
+  padding:12px 0; font-family:var(--mono-font); font-size:.88rem; line-height:1.6;
+  color:#94A3B8; text-align:right; overflow:hidden; user-select:none; flex-shrink:0;
+}
+.line-number{display:block; height:1.6em; padding-right:12px;}
+.editor-textarea{
+  flex:1; border:none; outline:none; padding:12px 18px; font-family:var(--mono-font);
+  font-size:.88rem; line-height:1.6; color:var(--ink); background:transparent; resize:none;
+  tab-size:2; overflow:auto; -webkit-appearance:none;
+}
+.editor-textarea:focus{outline:none}
+.editor-container:focus-within{border-color:var(--accent2); box-shadow:0 0 0 3px rgba(59,130,246,.15)}
+
+.fab{
+  position:fixed; left:50%; transform:translateX(-50%); bottom:calc(28px + env(safe-area-inset-bottom,0px));
+  z-index:20; background:linear-gradient(135deg,var(--accent),var(--accent2)); color:#fff; border:none;
+  padding:16px 30px; border-radius:999px; font-weight:700; font-size:1rem; cursor:pointer;
+  box-shadow:0 10px 30px rgba(37,99,235,.45); animation:glow 2.4s ease-in-out infinite;
+  transition:transform .15s ease;
+}
+.fab:active{transform:translateX(-50%) scale(.94)}
+@keyframes glow{0%,100%{box-shadow:0 10px 30px rgba(37,99,235,.35)}50%{box-shadow:0 14px 42px rgba(37,99,235,.6)}}
+@media(min-width:720px){.fab{left:auto; right:36px; transform:none;} .fab:active{transform:scale(.94)}}
+
+/* Preview */
+.preview-bar{display:flex; justify-content:space-between; align-items:center; max-width:900px; margin:0 auto 16px;}
+iframe{width:100%; max-width:900px; display:block; margin:0 auto; height:70vh; border:1px solid var(--glass-border);
+  border-radius:24px; background:#fff; box-shadow:0 8px 32px rgba(31,38,135,.07);}
+
+/* CSS Preview Showcase */
+.css-showcase{background:var(--glass-bg); backdrop-filter:blur(12px); border:1px solid var(--glass-border);
+  border-radius:20px; padding:32px 24px; max-width:900px; margin:0 auto; box-shadow:0 8px 32px rgba(31,38,135,.06);}
+.showcase-row{display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-bottom:24px;}
+@media(max-width:640px){.showcase-row{grid-template-columns:1fr}}
+.showcase-item{padding:20px; border:1px solid #e2e8f0; border-radius:12px; background:#fafbfc;}
+
+/* JS Console */
+.console-wrap{background:var(--glass-bg); backdrop-filter:blur(12px); border:1px solid var(--glass-border);
+  border-radius:20px; padding:18px; max-width:900px; margin:0 auto; box-shadow:0 8px 32px rgba(31,38,135,.06);
+  font-family:var(--mono-font); font-size:.85rem; max-height:65vh; overflow-y:auto;}
+.console-line{padding:8px 12px; margin:4px 0; border-radius:8px; line-height:1.5;}
+.console-log{background:rgba(37,99,235,.06); color:var(--ink);}
+.console-error{background:rgba(239,68,68,.06); color:#dc2626;}
+.console-warn{background:rgba(234,179,8,.06); color:#b45309;}
+
+/* Guide accordion */
+.acc-item{background:var(--glass-bg); backdrop-filter:blur(20px); border:1px solid var(--glass-border);
+  border-radius:18px; margin-bottom:12px; overflow:hidden; box-shadow:0 8px 32px rgba(31,38,135,.06);}
+.acc-head{padding:16px 20px; font-weight:600; cursor:pointer; display:flex; justify-content:space-between; align-items:center;}
+.acc-body{max-height:0; overflow:hidden; transition:max-height .3s ease; padding:0 20px; color:var(--muted); font-size:.9rem;}
+.acc-item.open .acc-body{max-height:300px; padding-bottom:16px;}
+.acc-item.open .chev{transform:rotate(180deg);}
+.chev{transition:transform .25s ease; color:var(--accent)}
+
+footer{text-align:center; margin-top:40px; color:var(--muted); font-size:.85rem;}
+</style>
+</head>
+<body>
+<div class="orb orb1"></div><div class="orb orb2"></div><div class="orb orb3"></div>
+
+<!-- HOME -->
+<section class="view active" id="home">
+  <nav class="navbar">
+    <div class="logo">Code<span>Pad</span></div>
+  </nav>
+  <div class="container">
+    <h1 class="hero">Write, run, preview.</h1>
+    <p class="sub">Pick a language to edit, or read the guide.</p>
+    <div class="grid">
+      <div class="card" onclick="showView('html-editor')">
+        <div class="badge" style="background:#E34F26">H</div>
+        <div><h3>HTML Code Preview</h3><p>Structure your markup</p></div>
+      </div>
+      <div class="card" onclick="showView('css-editor')">
+        <div class="badge" style="background:#2563EB">C</div>
+        <div><h3>CSS Code Preview</h3><p>Style your page</p></div>
+      </div>
+      <div class="card" onclick="showView('js-editor')">
+        <div class="badge" style="background:#F7DF1E;color:#0F172A">J</div>
+        <div><h3>JavaScript Code Preview</h3><p>Add interactivity</p></div>
+      </div>
+      <div class="card" onclick="showView('guide')">
+        <div class="badge" style="background:#64748B">?</div>
+        <div><h3>User Guide</h3><p>How CodePad works</p></div>
+      </div>
+    </div>
+  </div>
+  <footer><span class="dot"></span>CodePad — Developed by Omar Faruk</footer>
+</section>
+
+<!-- HTML EDITOR -->
+<section class="view" id="html-editor">
+  <div class="navbar">
+    <div class="glass-btn" onclick="showView('home')">← Back</div>
+    <div class="logo">HTML Code<span>Pad</span></div>
+  </div>
+  <div class="container">
+    <div class="editor-container">
+      <div class="line-gutter" id="html-gutter"></div>
+      <textarea class="editor-textarea" id="html-code" spellcheck="false"></textarea>
+    </div>
+  </div>
+  <button class="fab" onclick="runHtml()">Run Code ⚡</button>
+</section>
+
+<!-- HTML PREVIEW -->
+<section class="view" id="html-preview">
+  <div class="preview-bar">
+    <div class="glass-btn" onclick="showView('html-editor')">← Editor</div>
+    <div class="glass-btn" onclick="runHtml()">⟳ Refresh</div>
+  </div>
+  <iframe id="html-frame" sandbox="allow-scripts"></iframe>
+</section>
+
+<!-- CSS EDITOR -->
+<section class="view" id="css-editor">
+  <div class="navbar">
+    <div class="glass-btn" onclick="showView('home')">← Back</div>
+    <div class="logo">CSS Code<span>Pad</span></div>
+  </div>
+  <div class="container">
+    <div class="editor-container">
+      <div class="line-gutter" id="css-gutter"></div>
+      <textarea class="editor-textarea" id="css-code" spellcheck="false"></textarea>
+    </div>
+  </div>
+  <button class="fab" onclick="runCss()">Run Code ⚡</button>
+</section>
+
+<!-- CSS PREVIEW -->
+<section class="view" id="css-preview">
+  <div class="preview-bar">
+    <div class="glass-btn" onclick="showView('css-editor')">← Editor</div>
+    <div class="glass-btn" onclick="runCss()">⟳ Refresh</div>
+  </div>
+  <div class="css-showcase">
+    <style id="css-showcase-style"></style>
+    <div class="showcase-row">
+      <div class="showcase-item"><button class="demo-btn">Primary Button</button></div>
+      <div class="showcase-item"><button class="demo-btn demo-secondary">Secondary Button</button></div>
+    </div>
+    <div class="showcase-row">
+      <div class="showcase-item demo-card"><h3>Card Title</h3><p>This is a sample card with custom CSS styling.</p></div>
+      <div class="showcase-item demo-badge"><span class="badge-primary">Badge</span> <span class="badge-secondary">Label</span></div>
+    </div>
+    <div class="showcase-row">
+      <div class="showcase-item demo-typography"><h2>Heading 2</h2><p>Body text with your custom styles.</p></div>
+      <div class="showcase-item demo-input"><input type="text" placeholder="Input field"></div>
+    </div>
+  </div>
+</section>
+
+<!-- JS EDITOR -->
+<section class="view" id="js-editor">
+  <div class="navbar">
+    <div class="glass-btn" onclick="showView('home')">← Back</div>
+    <div class="logo">JavaScript Code<span>Pad</span></div>
+  </div>
+  <div class="container">
+    <div class="editor-container">
+      <div class="line-gutter" id="js-gutter"></div>
+      <textarea class="editor-textarea" id="js-code" spellcheck="false"></textarea>
+    </div>
+  </div>
+  <button class="fab" onclick="runJs()">Run Code ⚡</button>
+</section>
+
+<!-- JS PREVIEW -->
+<section class="view" id="js-preview">
+  <div class="preview-bar">
+    <div class="glass-btn" onclick="showView('js-editor')">← Editor</div>
+    <div class="glass-btn" onclick="runJs()">⟳ Refresh</div>
+  </div>
+  <div class="console-wrap" id="js-console"></div>
+</section>
+
+<!-- GUIDE -->
+<section class="view" id="guide">
+  <div class="navbar">
+    <div class="glass-btn" onclick="showView('home')">← Back</div>
+    <div class="logo">Code<span>Pad</span></div>
+  </div>
+  <div class="container">
+    <h1 class="hero">User guide</h1>
+    <div class="acc-item"><div class="acc-head" onclick="toggleAcc(this)">HTML Editor <span class="chev">⌄</span></div>
+      <div class="acc-body">Write HTML markup to structure your page. Your code runs in a sandboxed preview showing the rendered output.</div></div>
+    <div class="acc-item"><div class="acc-head" onclick="toggleAcc(this)">CSS Editor <span class="chev">⌄</span></div>
+      <div class="acc-body">Write CSS to style elements. The preview displays a showcase of buttons, cards, and typography to see your styles live.</div></div>
+    <div class="acc-item"><div class="acc-head" onclick="toggleAcc(this)">JavaScript Editor <span class="chev">⌄</span></div>
+      <div class="acc-body">Write JavaScript to add logic. The preview shows a real-time console with console.log, errors, and execution output.</div></div>
+    <div class="acc-item"><div class="acc-head" onclick="toggleAcc(this)">Auto-save <span class="chev">⌄</span></div>
+      <div class="acc-body">Each language saves automatically as you type, so your code is still there next time you visit CodePad.</div></div>
+    <div class="acc-item"><div class="acc-head" onclick="toggleAcc(this)">Running code <span class="chev">⌄</span></div>
+      <div class="acc-body">Tap the floating "Run Code ⚡" button to execute your code and jump to the preview. Use Refresh to re-run without losing your editor content.</div></div>
+  </div>
+</section>
+
+<script>
+const defaults = {
+  html: '<!DOCTYPE html>\n<html>\n<head>\n  <title>My Page</title>\n</head>\n<body>\n  <h1>Hello from CodePad!</h1>\n  <p>Edit the HTML and tap Run Code.</p>\n</body>\n</html>',
+  css: 'body { font-family: -apple-system, sans-serif; margin: 0; padding: 20px; }\n.demo-btn { padding: 10px 20px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; }\n.demo-input input { padding: 8px 12px; border: 1px solid #ddd; border-radius: 6px; }',
+  js: '// Write your JavaScript here\nconsole.log("Hello from CodePad!");\nconst x = 5 + 3;\nconsole.log("5 + 3 =", x);'
+};
+
+let code = {};
+try {
+  code.html = localStorage.getItem('codepad_html') || defaults.html;
+  code.css = localStorage.getItem('codepad_css') || defaults.css;
+  code.js = localStorage.getItem('codepad_js') || defaults.js;
+} catch (e) {
+  code = { ...defaults };
+}
+
+const htmlCode = document.getElementById('html-code');
+const cssCode = document.getElementById('css-code');
+const jsCode = document.getElementById('js-code');
+
+// Set initial values
+htmlCode.value = code.html;
+cssCode.value = code.css;
+jsCode.value = code.js;
+
+// Update line numbers
+function updateLineNumbers(textarea, gutter) {
+  const lines = textarea.value.split('\n').length;
+  let html = '';
+  for (let i = 1; i <= lines; i++) {
+    html += '<span class="line-number">' + i + '</span>';
+  }
+  gutter.innerHTML = html;
+}
+
+// Sync scroll
+function syncScroll(textarea, gutter) {
+  gutter.scrollTop = textarea.scrollTop;
+}
+
+// Initialize and attach events
+['html', 'css', 'js'].forEach(lang => {
+  const textarea = document.getElementById(lang + '-code');
+  const gutter = document.getElementById(lang + '-gutter');
+  
+  updateLineNumbers(textarea, gutter);
+  
+  textarea.addEventListener('input', () => {
+    code[lang] = textarea.value;
+    try { localStorage.setItem('codepad_' + lang, code[lang]); } catch (e) {}
+    updateLineNumbers(textarea, gutter);
+  });
+  
+  textarea.addEventListener('scroll', () => {
+    syncScroll(textarea, gutter);
+  });
+});
+
+function showView(id) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+function runHtml() {
+  code.html = htmlCode.value;
+  try { localStorage.setItem('codepad_html', code.html); } catch (e) {}
+  document.getElementById('html-frame').srcdoc = code.html;
+  showView('html-preview');
+}
+
+function runCss() {
+  code.css = cssCode.value;
+  try { localStorage.setItem('codepad_css', code.css); } catch (e) {}
+  document.getElementById('css-showcase-style').textContent = code.css;
+  showView('css-preview');
+}
+
+function runJs() {
+  code.js = jsCode.value;
+  try { localStorage.setItem('codepad_js', code.js); } catch (e) {}
+  
+  const consoleLogs = [];
+  const oldLog = console.log;
+  const oldError = console.error;
+  const oldWarn = console.warn;
+  
+  console.log = function (...args) {
+    consoleLogs.push({ type: 'log', msg: args.map(a => String(a)).join(' ') });
+    oldLog.apply(console, args);
+  };
+  console.error = function (...args) {
+    consoleLogs.push({ type: 'error', msg: args.map(a => String(a)).join(' ') });
+    oldError.apply(console, args);
+  };
+  console.warn = function (...args) {
+    consoleLogs.push({ type: 'warn', msg: args.map(a => String(a)).join(' ') });
+    oldWarn.apply(console, args);
+  };
+  
+  try {
+    eval(code.js);
+  } catch (err) {
+    consoleLogs.push({ type: 'error', msg: 'Error: ' + err.message });
+  }
+  
+  console.log = oldLog;
+  console.error = oldError;
+  console.warn = oldWarn;
+  
+  const consoleDiv = document.getElementById('js-console');
+  consoleDiv.innerHTML = '';
+  consoleLogs.forEach(entry => {
+    const line = document.createElement('div');
+    line.className = 'console-line console-' + entry.type;
+    line.textContent = entry.msg;
+    consoleDiv.appendChild(line);
+  });
+  
+  showView('js-preview');
+}
+
+function toggleAcc(el) {
+  el.parentElement.classList.toggle('open');
+}
+</script>
+</body>
+</html>
